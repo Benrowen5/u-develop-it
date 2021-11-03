@@ -1,6 +1,8 @@
 const mysql = require('mysql2');
 const express = require('express');
 const inputCheck = require('./utils/inputCheck');
+const { data } = require('browserslist');
+const { result } = require('lodash');
 const PORT = process.env.PORT || 3001;
 const app = express();
 
@@ -64,11 +66,39 @@ app.get('/api/candidate/:id', (req, res) => {
     });
 });
 
+// GET route for all parties
+app.get('/api/parties', (req, res) => {
+    const sql = `SELECT * FROM parties`;
+    db.query(sql, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message});
+        }
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+// get route for a single party
+app.get('/api/party/:id', (req, res) => {
+    const sql = `SELECT * FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.query(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({error: err.message});
+        }
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
+
 // Delete a single candidate
 app.delete('/api/candidate/:id', (req, res) => {
     const sql = `DELETE FROM candidates WHERE id = ?`;
     const params = [req.params.id];
-    
     db.query(sql, params, (err,result) => {
         if (err) {
             res.statusMessage(400).json({error: res.message});
@@ -83,6 +113,27 @@ app.delete('/api/candidate/:id', (req, res) => {
                 id: req.params.id
             });
         }
+    });
+});
+
+// delete a party
+app.delete('/api/party/:id', (req, res) => {
+    const sql = `DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.query(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: res.message});
+        } else if (!result.affectedRows) {
+            res.json({
+                message: 'Party not found!'
+            });
+        } else {
+            res.json({
+                message: 'success',
+                changes: result.affectedRows,
+                id: req.params.id
+            });
+        };
     });
 });
 
